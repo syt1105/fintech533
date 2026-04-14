@@ -4,14 +4,14 @@
     "href": "index.html",
     "title": "ETF Breakout Strategy",
     "section": "",
-    "text": "This report documents a long-only ETF breakout strategy built with ShinyBroker data, explicit risk rules, a full trade blotter, and rolling out-of-sample evaluation.\n\n\n\nARKK\n\n\n\n1.28\n\n\n\n42.94%\n\n\n\n12"
+    "text": "This report presents a long-only ETF breakout strategy built with ShinyBroker data, explicit risk controls, a full trade blotter, and rolling out-of-sample evaluation. The goal is to show a transparent research workflow rather than a black-box signal.\n\n\n\nARKK\n\n\n\n1.28\n\n\n\n42.94%\n\n\n\n12"
   },
   {
     "objectID": "index.html#walk-forward-breakout-backtest",
     "href": "index.html#walk-forward-breakout-backtest",
     "title": "ETF Breakout Strategy",
     "section": "",
-    "text": "This report documents a long-only ETF breakout strategy built with ShinyBroker data, explicit risk rules, a full trade blotter, and rolling out-of-sample evaluation.\n\n\n\nARKK\n\n\n\n1.28\n\n\n\n42.94%\n\n\n\n12"
+    "text": "This report presents a long-only ETF breakout strategy built with ShinyBroker data, explicit risk controls, a full trade blotter, and rolling out-of-sample evaluation. The goal is to show a transparent research workflow rather than a black-box signal.\n\n\n\nARKK\n\n\n\n1.28\n\n\n\n42.94%\n\n\n\n12"
   },
   {
     "objectID": "index.html#strategy-overview",

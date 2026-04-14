@@ -5,7 +5,7 @@ title: "ETF Breakout Strategy"
 ::: {.hero-panel}
 ## Walk-Forward Breakout Backtest
 
-This report documents a long-only ETF breakout strategy built with ShinyBroker data, explicit risk rules, a full trade blotter, and rolling out-of-sample evaluation.
+This report presents a long-only ETF breakout strategy built with ShinyBroker data, explicit risk controls, a full trade blotter, and rolling out-of-sample evaluation. The goal is to show a transparent research workflow rather than a black-box signal.
 
 ::: {.metric-grid}
 ::: {.metric-card}
