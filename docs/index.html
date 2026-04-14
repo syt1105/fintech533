@@ -112,7 +112,8 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#strategy-overview" id="toc-strategy-overview" class="nav-link active" data-scroll-target="#strategy-overview">Strategy Overview</a></li>
+  <li><a href="#walk-forward-breakout-backtest" id="toc-walk-forward-breakout-backtest" class="nav-link active" data-scroll-target="#walk-forward-breakout-backtest">Walk-Forward Breakout Backtest</a></li>
+  <li><a href="#strategy-overview" id="toc-strategy-overview" class="nav-link" data-scroll-target="#strategy-overview">Strategy Overview</a></li>
   <li><a href="#asset-selection" id="toc-asset-selection" class="nav-link" data-scroll-target="#asset-selection">Asset Selection</a></li>
   <li><a href="#breakout-definition" id="toc-breakout-definition" class="nav-link" data-scroll-target="#breakout-definition">Breakout Definition</a></li>
   <li><a href="#trade-rules" id="toc-trade-rules" class="nav-link" data-scroll-target="#trade-rules">Trade Rules</a></li>
@@ -148,6 +149,28 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
+<section id="walk-forward-breakout-backtest" class="level2 hero-panel">
+<h2 class="anchored" data-anchor-id="walk-forward-breakout-backtest">Walk-Forward Breakout Backtest</h2>
+<p>This report documents a long-only ETF breakout strategy built with ShinyBroker data, explicit risk rules, a full trade blotter, and rolling out-of-sample evaluation.</p>
+<div class="metric-grid">
+<section id="selected-etf" class="level3 metric-card">
+<h3 class="anchored" data-anchor-id="selected-etf">Selected ETF</h3>
+<p><code>ARKK</code></p>
+</section>
+<section id="sharpe-ratio" class="level3 metric-card">
+<h3 class="anchored" data-anchor-id="sharpe-ratio">Sharpe Ratio</h3>
+<p><code>1.28</code></p>
+</section>
+<section id="total-return" class="level3 metric-card">
+<h3 class="anchored" data-anchor-id="total-return">Total Return</h3>
+<p><code>42.94%</code></p>
+</section>
+<section id="trade-count" class="level3 metric-card">
+<h3 class="anchored" data-anchor-id="trade-count">Trade Count</h3>
+<p><code>12</code></p>
+</section>
+</div>
+</section>
 <section id="strategy-overview" class="level2">
 <h2 class="anchored" data-anchor-id="strategy-overview">Strategy Overview</h2>
 <p>This project tests a long-only ETF breakout strategy using daily price data from Interactive Brokers via ShinyBroker. I screened 11 liquid ETFs and selected <strong>ARKK</strong> for the final report because it delivered the strongest out-of-sample Sharpe ratio and one of the best total returns in the walk-forward screen while still generating an active and readable trade blotter. The strategy looks for a close above the highest high from the previous 20 trading sessions, enters at the next day’s open, and then manages risk with an ATR-based stop-loss, an ATR-based profit target, and a maximum holding period. The final implementation uses a one-year training window of 252 trading days and a 63-trading-day out-of-sample test window that rolls forward through the sample.</p>
@@ -162,7 +185,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="breakout-definition" class="level2">
 <h2 class="anchored" data-anchor-id="breakout-definition">Breakout Definition</h2>
 <p>The breakout detection function is named <code>detect_breakouts</code>. In plain English, it labels a breakout when today’s closing price finishes above the highest intraday high observed over the previous <strong>20 trading days</strong>. That prior 20-day high is a Donchian-style breakout threshold. The same function also calculates a <strong>14-day Average True Range (ATR)</strong> plus rolling moving averages and average volume so the trade management rules and optional filters use only information that was already known at the time of the signal.</p>
-<p>The strategy parameters are explicit and easy to locate in the Python code. The final ARKK implementation selected most often by the walk-forward process used:</p>
+<p>The strategy parameters are explicit and easy to locate in the Python code. Because the model is re-optimized in each walk-forward training window, the exact settings can vary by test period. The parameter values below are the <strong>most frequently selected settings across the walk-forward windows</strong> for the featured ARKK backtest:</p>
 <ul>
 <li>Breakout lookback: <code>20</code> trading days</li>
 <li>ATR window: <code>14</code> trading days</li>
@@ -193,6 +216,24 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="performance-snapshot" class="level2">
 <h2 class="anchored" data-anchor-id="performance-snapshot">Performance Snapshot</h2>
+<div class="metric-grid">
+<section id="avg-return-trade" class="level3 metric-card">
+<h3 class="anchored" data-anchor-id="avg-return-trade">Avg Return / Trade</h3>
+<p><code>3.66%</code></p>
+</section>
+<section id="win-rate" class="level3 metric-card">
+<h3 class="anchored" data-anchor-id="win-rate">Win Rate</h3>
+<p><code>66.67%</code></p>
+</section>
+<section id="profit-factor" class="level3 metric-card">
+<h3 class="anchored" data-anchor-id="profit-factor">Profit Factor</h3>
+<p><code>3.55</code></p>
+</section>
+<section id="max-drawdown" class="level3 metric-card">
+<h3 class="anchored" data-anchor-id="max-drawdown">Max Drawdown</h3>
+<p><code>-13.13%</code></p>
+</section>
+</div>
 <ul>
 <li>Trade count: <code>12</code></li>
 <li>Average return per trade: <code>3.66%</code></li>
@@ -243,6 +284,7 @@ ul.task-list li input[type="checkbox"] {
 <p>The full blotter includes entry date, exit date, entry price, exit price, position size, direction, realized return, realized PnL, and trade outcome. It is available in downloadable CSV format here: <a href="data/trade_blotter.csv">trade_blotter.csv</a></p>
 <iframe src="assets/trade_blotter.html" width="100%" height="980" style="border:none;">
 </iframe>
+<p>Download the full walk-forward window log here: <a href="data/walk_forward_windows.csv">walk_forward_windows.csv</a></p>
 </section>
 <section id="methodology-and-assumptions" class="level2">
 <h2 class="anchored" data-anchor-id="methodology-and-assumptions">Methodology and Assumptions</h2>

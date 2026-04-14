@@ -4,14 +4,21 @@
     "href": "index.html",
     "title": "ETF Breakout Strategy",
     "section": "",
-    "text": "This project tests a long-only ETF breakout strategy using daily price data from Interactive Brokers via ShinyBroker. I screened 11 liquid ETFs and selected ARKK for the final report because it delivered the strongest out-of-sample Sharpe ratio and one of the best total returns in the walk-forward screen while still generating an active and readable trade blotter. The strategy looks for a close above the highest high from the previous 20 trading sessions, enters at the next day’s open, and then manages risk with an ATR-based stop-loss, an ATR-based profit target, and a maximum holding period. The final implementation uses a one-year training window of 252 trading days and a 63-trading-day out-of-sample test window that rolls forward through the sample."
+    "text": "This report documents a long-only ETF breakout strategy built with ShinyBroker data, explicit risk rules, a full trade blotter, and rolling out-of-sample evaluation.\n\n\n\nARKK\n\n\n\n1.28\n\n\n\n42.94%\n\n\n\n12"
+  },
+  {
+    "objectID": "index.html#walk-forward-breakout-backtest",
+    "href": "index.html#walk-forward-breakout-backtest",
+    "title": "ETF Breakout Strategy",
+    "section": "",
+    "text": "This report documents a long-only ETF breakout strategy built with ShinyBroker data, explicit risk rules, a full trade blotter, and rolling out-of-sample evaluation.\n\n\n\nARKK\n\n\n\n1.28\n\n\n\n42.94%\n\n\n\n12"
   },
   {
     "objectID": "index.html#strategy-overview",
     "href": "index.html#strategy-overview",
     "title": "ETF Breakout Strategy",
-    "section": "",
-    "text": "This project tests a long-only ETF breakout strategy using daily price data from Interactive Brokers via ShinyBroker. I screened 11 liquid ETFs and selected ARKK for the final report because it delivered the strongest out-of-sample Sharpe ratio and one of the best total returns in the walk-forward screen while still generating an active and readable trade blotter. The strategy looks for a close above the highest high from the previous 20 trading sessions, enters at the next day’s open, and then manages risk with an ATR-based stop-loss, an ATR-based profit target, and a maximum holding period. The final implementation uses a one-year training window of 252 trading days and a 63-trading-day out-of-sample test window that rolls forward through the sample."
+    "section": "Strategy Overview",
+    "text": "Strategy Overview\nThis project tests a long-only ETF breakout strategy using daily price data from Interactive Brokers via ShinyBroker. I screened 11 liquid ETFs and selected ARKK for the final report because it delivered the strongest out-of-sample Sharpe ratio and one of the best total returns in the walk-forward screen while still generating an active and readable trade blotter. The strategy looks for a close above the highest high from the previous 20 trading sessions, enters at the next day’s open, and then manages risk with an ATR-based stop-loss, an ATR-based profit target, and a maximum holding period. The final implementation uses a one-year training window of 252 trading days and a 63-trading-day out-of-sample test window that rolls forward through the sample."
   },
   {
     "objectID": "index.html#asset-selection",
@@ -25,7 +32,7 @@
     "href": "index.html#breakout-definition",
     "title": "ETF Breakout Strategy",
     "section": "Breakout Definition",
-    "text": "Breakout Definition\nThe breakout detection function is named detect_breakouts. In plain English, it labels a breakout when today’s closing price finishes above the highest intraday high observed over the previous 20 trading days. That prior 20-day high is a Donchian-style breakout threshold. The same function also calculates a 14-day Average True Range (ATR) plus rolling moving averages and average volume so the trade management rules and optional filters use only information that was already known at the time of the signal.\nThe strategy parameters are explicit and easy to locate in the Python code. The final ARKK implementation selected most often by the walk-forward process used:\n\nBreakout lookback: 20 trading days\nATR window: 14 trading days\nStop-loss: 2.0 x ATR below entry\nProfit target: 4.0 x ATR above entry\nTimeout: 20 trading days\nTrend filter options allowed in optimization: none, sma50, or sma200\nVolume filter: not used in the final search grid\nPosition sizing rule: invest approximately 95% of current capital at each new entry, then round down to whole shares\nDirection: Long only"
+    "text": "Breakout Definition\nThe breakout detection function is named detect_breakouts. In plain English, it labels a breakout when today’s closing price finishes above the highest intraday high observed over the previous 20 trading days. That prior 20-day high is a Donchian-style breakout threshold. The same function also calculates a 14-day Average True Range (ATR) plus rolling moving averages and average volume so the trade management rules and optional filters use only information that was already known at the time of the signal.\nThe strategy parameters are explicit and easy to locate in the Python code. Because the model is re-optimized in each walk-forward training window, the exact settings can vary by test period. The parameter values below are the most frequently selected settings across the walk-forward windows for the featured ARKK backtest:\n\nBreakout lookback: 20 trading days\nATR window: 14 trading days\nStop-loss: 2.0 x ATR below entry\nProfit target: 4.0 x ATR above entry\nTimeout: 20 trading days\nTrend filter options allowed in optimization: none, sma50, or sma200\nVolume filter: not used in the final search grid\nPosition sizing rule: invest approximately 95% of current capital at each new entry, then round down to whole shares\nDirection: Long only"
   },
   {
     "objectID": "index.html#trade-rules",
@@ -39,7 +46,7 @@
     "href": "index.html#performance-snapshot",
     "title": "ETF Breakout Strategy",
     "section": "Performance Snapshot",
-    "text": "Performance Snapshot\n\nTrade count: 12\nAverage return per trade: 3.66%\nAnnualized Sharpe ratio: 1.28\nAnnualized Sortino ratio: 1.07\nWin rate: 66.67%\nProfit factor: 3.55\nExpectancy: $3,638.24 per trade\nMax drawdown: -13.13%\nTotal return on the marked-to-market equity curve: 42.94%\nRisk-free rate assumption used in Sharpe and Sortino: 0.00%\n\nWhat the headline metrics mean:\n\nAverage return per trade measures the typical percentage gain or loss from each completed position.\nSharpe ratio measures risk-adjusted return after subtracting the stated risk-free rate from daily strategy returns.\nSortino ratio is similar to Sharpe but penalizes only downside volatility.\nMax drawdown shows the worst peak-to-trough decline in the strategy equity curve.\nWin rate measures how often the strategy finishes a trade with positive PnL.\nProfit factor compares total gross profits against total gross losses.\nExpectancy measures the average dollar PnL created by one trade."
+    "text": "Performance Snapshot\n\n\nAvg Return / Trade\n3.66%\n\n\nWin Rate\n66.67%\n\n\nProfit Factor\n3.55\n\n\nMax Drawdown\n-13.13%\n\n\n\nTrade count: 12\nAverage return per trade: 3.66%\nAnnualized Sharpe ratio: 1.28\nAnnualized Sortino ratio: 1.07\nWin rate: 66.67%\nProfit factor: 3.55\nExpectancy: $3,638.24 per trade\nMax drawdown: -13.13%\nTotal return on the marked-to-market equity curve: 42.94%\nRisk-free rate assumption used in Sharpe and Sortino: 0.00%\n\nWhat the headline metrics mean:\n\nAverage return per trade measures the typical percentage gain or loss from each completed position.\nSharpe ratio measures risk-adjusted return after subtracting the stated risk-free rate from daily strategy returns.\nSortino ratio is similar to Sharpe but penalizes only downside volatility.\nMax drawdown shows the worst peak-to-trough decline in the strategy equity curve.\nWin rate measures how often the strategy finishes a trade with positive PnL.\nProfit factor compares total gross profits against total gross losses.\nExpectancy measures the average dollar PnL created by one trade."
   },
   {
     "objectID": "index.html#equity-curve",
@@ -67,7 +74,7 @@
     "href": "index.html#trade-blotter",
     "title": "ETF Breakout Strategy",
     "section": "Trade Blotter",
-    "text": "Trade Blotter\nThe full blotter includes entry date, exit date, entry price, exit price, position size, direction, realized return, realized PnL, and trade outcome. It is available in downloadable CSV format here: trade_blotter.csv"
+    "text": "Trade Blotter\nThe full blotter includes entry date, exit date, entry price, exit price, position size, direction, realized return, realized PnL, and trade outcome. It is available in downloadable CSV format here: trade_blotter.csv\n\n\nDownload the full walk-forward window log here: walk_forward_windows.csv"
   },
   {
     "objectID": "index.html#methodology-and-assumptions",
