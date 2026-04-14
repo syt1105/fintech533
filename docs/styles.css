@@ -32,25 +32,25 @@ body {
 .navbar-title {
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: var(--accent-deep) !important;
+  color: #ffffff !important;
 }
 
 .navbar .nav-link,
 .navbar .navbar-brand,
 .navbar .navbar-brand:hover,
 .navbar .navbar-brand:focus {
-  color: var(--ink) !important;
+  color: #ffffff !important;
 }
 
 .navbar .nav-link.active,
 .navbar .nav-link:hover,
 .navbar .nav-link:focus {
-  color: var(--accent) !important;
+  color: #ffffff !important;
 }
 
 .navbar .nav-link.active {
   font-weight: 700;
-  border-bottom: 2px solid var(--accent-warm);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.85);
 }
 
 main.content {
@@ -137,7 +137,7 @@ code {
 
 .metric-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.9rem;
   margin: 1rem 0 0.3rem;
 }
