@@ -8,9 +8,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from breakouts.strategy import (
+    CAPITAL_FRACTION_PER_TRADE,
     ETF_UNIVERSE,
     INITIAL_CAPITAL,
-    POSITION_SIZE,
     RISK_FREE_RATE,
     compute_performance_metrics,
     fetch_etf_history,
@@ -114,7 +114,7 @@ def main() -> None:
         "selected_symbol": selected_symbol,
         "screened_universe": ETF_UNIVERSE,
         "initial_capital": INITIAL_CAPITAL,
-        "position_size": POSITION_SIZE,
+        "capital_fraction_per_trade": CAPITAL_FRACTION_PER_TRADE,
         "risk_free_rate": RISK_FREE_RATE,
         "selected_metrics": metrics,
         "selected_breakout_lookback": int(trades["breakout_lookback"].mode().iloc[0]),
@@ -122,11 +122,14 @@ def main() -> None:
         "selected_stop_atr": float(trades["stop_atr"].mode().iloc[0]),
         "selected_target_atr": float(trades["target_atr"].mode().iloc[0]),
         "selected_max_hold_days": int(trades["max_hold_days"].mode().iloc[0]),
+        "selected_trend_filter": str(trades["trend_filter"].mode().iloc[0]),
+        "selected_volume_filter": bool(trades["volume_filter"].mode().iloc[0]),
+        "selected_median_position_size": int(pd.to_numeric(trades["size"]).median()),
         "asset_selection_note": (
             f"I screened {len(ETF_UNIVERSE)} liquid ETFs using the same one-year training and "
             f"one-quarter out-of-sample framework, then selected {selected_symbol} because it "
-            f"finished with the strongest out-of-sample Sharpe ratio while still generating an "
-            f"active trade blotter."
+            f"finished with the strongest out-of-sample Sharpe ratio and one of the best total "
+            f"returns while still generating an active trade blotter."
         ),
     }
 

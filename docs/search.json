@@ -4,42 +4,42 @@
     "href": "index.html",
     "title": "ETF Breakout Strategy",
     "section": "",
-    "text": "This project tests a long-only ETF breakout strategy using daily price data from Interactive Brokers via ShinyBroker. I screened 10 liquid ETFs and selected QQQ for the final report because it delivered the strongest out-of-sample Sharpe ratio in the walk-forward screen while still generating an active and readable trade blotter. The strategy looks for a close above the highest high from the previous 20 trading sessions, enters at the next day’s open, and then manages risk with an ATR-based stop-loss, an ATR-based profit target, and a maximum holding period. The final implementation uses a one-year training window of 252 trading days and a 63-trading-day out-of-sample test window that rolls forward through the sample."
+    "text": "This project tests a long-only ETF breakout strategy using daily price data from Interactive Brokers via ShinyBroker. I screened 11 liquid ETFs and selected ARKK for the final report because it delivered the strongest out-of-sample Sharpe ratio and one of the best total returns in the walk-forward screen while still generating an active and readable trade blotter. The strategy looks for a close above the highest high from the previous 20 trading sessions, enters at the next day’s open, and then manages risk with an ATR-based stop-loss, an ATR-based profit target, and a maximum holding period. The final implementation uses a one-year training window of 252 trading days and a 63-trading-day out-of-sample test window that rolls forward through the sample."
   },
   {
     "objectID": "index.html#strategy-overview",
     "href": "index.html#strategy-overview",
     "title": "ETF Breakout Strategy",
     "section": "",
-    "text": "This project tests a long-only ETF breakout strategy using daily price data from Interactive Brokers via ShinyBroker. I screened 10 liquid ETFs and selected QQQ for the final report because it delivered the strongest out-of-sample Sharpe ratio in the walk-forward screen while still generating an active and readable trade blotter. The strategy looks for a close above the highest high from the previous 20 trading sessions, enters at the next day’s open, and then manages risk with an ATR-based stop-loss, an ATR-based profit target, and a maximum holding period. The final implementation uses a one-year training window of 252 trading days and a 63-trading-day out-of-sample test window that rolls forward through the sample."
+    "text": "This project tests a long-only ETF breakout strategy using daily price data from Interactive Brokers via ShinyBroker. I screened 11 liquid ETFs and selected ARKK for the final report because it delivered the strongest out-of-sample Sharpe ratio and one of the best total returns in the walk-forward screen while still generating an active and readable trade blotter. The strategy looks for a close above the highest high from the previous 20 trading sessions, enters at the next day’s open, and then manages risk with an ATR-based stop-loss, an ATR-based profit target, and a maximum holding period. The final implementation uses a one-year training window of 252 trading days and a 63-trading-day out-of-sample test window that rolls forward through the sample."
   },
   {
     "objectID": "index.html#asset-selection",
     "href": "index.html#asset-selection",
     "title": "ETF Breakout Strategy",
     "section": "Asset Selection",
-    "text": "Asset Selection\nI screened the following ETF universe with the same walk-forward process: SPY, QQQ, IWM, DIA, XLE, XLK, XLF, XLV, GLD, and TLT. For each ETF, I optimized the breakout parameters on the trailing 252 trading days and then evaluated the chosen configuration on the next 63-day out-of-sample window. QQQ ranked first in the screen with 13 out-of-sample trades and the best Sharpe ratio in the candidate set, so I used it as the featured asset for the full write-up.\nDownload the screen summary here: asset_screen.csv"
+    "text": "Asset Selection\nI screened the following ETF universe with the same walk-forward process: SPY, QQQ, SMH, SOXX, ARKK, XLE, XLK, XLF, XBI, GLD, and TLT. For each ETF, I optimized the breakout parameters on the trailing 252 trading days and then evaluated the chosen configuration on the next 63-day out-of-sample window. ARKK ranked first in the screen with an annualized out-of-sample Sharpe ratio of 1.28, total return of 42.94%, and a 12-trade blotter, so it became the featured asset for the full write-up.\nDownload the screen summary here: asset_screen.csv"
   },
   {
     "objectID": "index.html#breakout-definition",
     "href": "index.html#breakout-definition",
     "title": "ETF Breakout Strategy",
     "section": "Breakout Definition",
-    "text": "Breakout Definition\nThe breakout detection function is named detect_breakouts. In plain English, it labels a breakout when today’s closing price finishes above the highest intraday high observed over the previous 20 trading days. That prior 20-day high is a Donchian-style breakout threshold. The same function also calculates a 14-day Average True Range (ATR) so the trade management rules use volatility information that was already known at the time of the signal.\nThe strategy parameters are explicit and easy to locate in the Python code. The final QQQ implementation selected most often by the walk-forward process used:\n\nBreakout lookback: 20 trading days\nATR window: 14 trading days\nStop-loss: 2.5 x ATR below entry\nProfit target: 2.0 x ATR above entry\nTimeout: 20 trading days\nPosition size: 100 shares\nDirection: Long only"
+    "text": "Breakout Definition\nThe breakout detection function is named detect_breakouts. In plain English, it labels a breakout when today’s closing price finishes above the highest intraday high observed over the previous 20 trading days. That prior 20-day high is a Donchian-style breakout threshold. The same function also calculates a 14-day Average True Range (ATR) plus rolling moving averages and average volume so the trade management rules and optional filters use only information that was already known at the time of the signal.\nThe strategy parameters are explicit and easy to locate in the Python code. The final ARKK implementation selected most often by the walk-forward process used:\n\nBreakout lookback: 20 trading days\nATR window: 14 trading days\nStop-loss: 2.0 x ATR below entry\nProfit target: 4.0 x ATR above entry\nTimeout: 20 trading days\nTrend filter options allowed in optimization: none, sma50, or sma200\nVolume filter: not used in the final search grid\nPosition sizing rule: invest approximately 95% of current capital at each new entry, then round down to whole shares\nDirection: Long only"
   },
   {
     "objectID": "index.html#trade-rules",
     "href": "index.html#trade-rules",
     "title": "ETF Breakout Strategy",
     "section": "Trade Rules",
-    "text": "Trade Rules\nTrades are entered at the next trading day’s open after a breakout signal. Once a position is open, the exit logic is checked in conservative order:\n\nStop-loss if the day’s low touches the stop level\nProfit target if the day’s high reaches the target level\nTimeout exit at the close after 20 trading days\nEnd-of-sample close if a test window ends before another exit rule fires\n\nFor trade outcome analysis, each completed trade is classified into one of three buckets:\n\nSuccessful: the profit target was hit, or the trade closed profitably before the test window ended\nTimed out: the trade was force-closed after the holding limit and did not qualify as successful\nStop-loss triggered: the ATR stop was hit"
+    "text": "Trade Rules\nTrades are entered at the next trading day’s open after a breakout signal. Once a position is open, the exit logic is checked in conservative order:\n\nStop-loss if the day’s low touches the stop level\nProfit target if the day’s high reaches the 4.0 x ATR target level\nTimeout exit at the close after 20 trading days\nEnd-of-sample close if a test window ends before another exit rule fires\n\nFor trade outcome analysis, each completed trade is classified into one of three buckets:\n\nSuccessful: the profit target was hit, or the trade closed profitably before the test window ended\nTimed out: the trade was force-closed after the holding limit and did not qualify as successful\nStop-loss triggered: the ATR stop was hit"
   },
   {
     "objectID": "index.html#performance-snapshot",
     "href": "index.html#performance-snapshot",
     "title": "ETF Breakout Strategy",
     "section": "Performance Snapshot",
-    "text": "Performance Snapshot\n\nTrade count: 13\nAverage return per trade: 0.85%\nAnnualized Sharpe ratio: -0.29\nAnnualized Sortino ratio: -0.38\nWin rate: 61.54%\nProfit factor: 2.05\nExpectancy: $418.44 per trade\nMax drawdown: -2.72%\nTotal return on the marked-to-market equity curve: -0.38%\nRisk-free rate assumption used in Sharpe and Sortino: 4.00%\n\nWhat the headline metrics mean:\n\nAverage return per trade measures the typical percentage gain or loss from each completed position.\nSharpe ratio measures risk-adjusted return after subtracting the stated risk-free rate from daily strategy returns.\nSortino ratio is similar to Sharpe but penalizes only downside volatility.\nMax drawdown shows the worst peak-to-trough decline in the strategy equity curve.\nWin rate measures how often the strategy finishes a trade with positive PnL.\nProfit factor compares total gross profits against total gross losses.\nExpectancy measures the average dollar PnL created by one trade."
+    "text": "Performance Snapshot\n\nTrade count: 12\nAverage return per trade: 3.66%\nAnnualized Sharpe ratio: 1.28\nAnnualized Sortino ratio: 1.07\nWin rate: 66.67%\nProfit factor: 3.55\nExpectancy: $3,638.24 per trade\nMax drawdown: -13.13%\nTotal return on the marked-to-market equity curve: 42.94%\nRisk-free rate assumption used in Sharpe and Sortino: 0.00%\n\nWhat the headline metrics mean:\n\nAverage return per trade measures the typical percentage gain or loss from each completed position.\nSharpe ratio measures risk-adjusted return after subtracting the stated risk-free rate from daily strategy returns.\nSortino ratio is similar to Sharpe but penalizes only downside volatility.\nMax drawdown shows the worst peak-to-trough decline in the strategy equity curve.\nWin rate measures how often the strategy finishes a trade with positive PnL.\nProfit factor compares total gross profits against total gross losses.\nExpectancy measures the average dollar PnL created by one trade."
   },
   {
     "objectID": "index.html#equity-curve",
@@ -60,7 +60,7 @@
     "href": "index.html#trade-outcome-analysis",
     "title": "ETF Breakout Strategy",
     "section": "Trade Outcome Analysis",
-    "text": "Trade Outcome Analysis\nThe final walk-forward backtest produced 13 QQQ trades:\n\nSuccessful: 8\nStop-loss triggered: 4\nTimed out: 1\n\nDownload the trade outcome summary here: trade_outcomes.csv"
+    "text": "Trade Outcome Analysis\nThe final walk-forward backtest produced 12 ARKK trades:\n\nSuccessful: 8\nStop-loss triggered: 3\nTimed out: 1\n\nDownload the trade outcome summary here: trade_outcomes.csv"
   },
   {
     "objectID": "index.html#trade-blotter",
@@ -74,7 +74,7 @@
     "href": "index.html#methodology-and-assumptions",
     "title": "ETF Breakout Strategy",
     "section": "Methodology and Assumptions",
-    "text": "Methodology and Assumptions\n\nData source: Interactive Brokers historical daily bars retrieved with shinybroker\nFrequency: Daily\nAsset universe: 10 liquid ETFs\nIn-sample optimization window: 252 trading days\nOut-of-sample test window: 63 trading days\nSlippage assumption: 0\nCommission assumption: 0\nMissing-value handling: rows with missing OHLCV values are removed before testing\nExposure: one long position at a time\nExecution convention: next-day open after signal"
+    "text": "Methodology and Assumptions\n\nData source: Interactive Brokers historical daily bars retrieved with shinybroker\nFrequency: Daily\nAsset universe: 11 liquid ETFs\nIn-sample optimization window: 252 trading days\nOut-of-sample test window: 63 trading days\nSlippage assumption: 0\nCommission assumption: 0\nMissing-value handling: rows with missing OHLCV values are removed before testing\nExposure: one long position at a time\nExecution convention: next-day open after signal\nCapital allocation rule: approximately 95% of current capital is deployed on each new position\nRisk-free rate assumption in performance metrics: 0.00%"
   },
   {
     "objectID": "index.html#replication",

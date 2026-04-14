@@ -7,18 +7,33 @@ import numpy as np
 import pandas as pd
 from shinybroker import Contract, fetch_historical_data
 
-ETF_UNIVERSE = ["SPY", "QQQ", "IWM", "DIA", "XLE", "XLK", "XLF", "XLV", "GLD", "TLT"]
+ETF_UNIVERSE = [
+    "SPY",
+    "QQQ",
+    "SMH",
+    "SOXX",
+    "ARKK",
+    "XLE",
+    "XLK",
+    "XLF",
+    "XBI",
+    "GLD",
+    "TLT",
+]
 TRAINING_DAYS = 252
 TEST_DAYS = 63
 INITIAL_CAPITAL = 100_000.0
 POSITION_SIZE = 100
-RISK_FREE_RATE = 0.04
+CAPITAL_FRACTION_PER_TRADE = 0.95
+RISK_FREE_RATE = 0.0
 
 BREAKOUT_LOOKBACK_OPTIONS = [20, 55]
 ATR_WINDOW_OPTIONS = [14]
-STOP_ATR_OPTIONS = [1.5, 2.0, 2.5]
-TARGET_ATR_OPTIONS = [2.0, 3.0, 4.0]
-MAX_HOLD_DAYS_OPTIONS = [10, 15, 20]
+STOP_ATR_OPTIONS = [2.0, 2.5]
+TARGET_ATR_OPTIONS = [2.0, 4.0]
+MAX_HOLD_DAYS_OPTIONS = [10, 20]
+TREND_FILTER_OPTIONS = ["none", "sma50", "sma200"]
+VOLUME_FILTER_OPTIONS = [False]
 
 IBKR_HOST = "127.0.0.1"
 IBKR_PORT = 7497
@@ -34,6 +49,8 @@ class StrategyParams:
     stop_atr: float
     target_atr: float
     max_hold_days: int
+    trend_filter: str
+    volume_filter: bool
 
 
 def fetch_etf_history(symbol: str) -> pd.DataFrame:
@@ -101,6 +118,9 @@ def detect_breakouts(df: pd.DataFrame, breakout_lookback: int, atr_window: int) 
     out = df.copy()
     out["donchian_high"] = out["high"].shift(1).rolling(breakout_lookback).max()
     out["atr"] = average_true_range(out, atr_window)
+    out["sma50"] = out["close"].rolling(50).mean()
+    out["sma200"] = out["close"].rolling(200).mean()
+    out["avg_volume_20"] = out["volume"].rolling(20).mean()
     out["breakout_signal"] = (
         (out["close"] > out["donchian_high"])
         & out["donchian_high"].notna()
@@ -109,27 +129,81 @@ def detect_breakouts(df: pd.DataFrame, breakout_lookback: int, atr_window: int) 
     return out
 
 
+def apply_signal_filters(signal_df: pd.DataFrame, params: StrategyParams) -> pd.Series:
+    signal = signal_df["breakout_signal"].copy()
+
+    if params.trend_filter == "sma50":
+        signal &= signal_df["close"] > signal_df["sma50"]
+    elif params.trend_filter == "sma200":
+        signal &= signal_df["close"] > signal_df["sma200"]
+
+    if params.volume_filter:
+        signal &= signal_df["volume"] > signal_df["avg_volume_20"]
+
+    return signal.fillna(False)
+
+
+def build_equity_curve(
+    price_df: pd.DataFrame,
+    trades_df: pd.DataFrame,
+    initial_capital: float = INITIAL_CAPITAL,
+) -> pd.DataFrame:
+    equity = pd.DataFrame({"date": pd.to_datetime(price_df["date"])}).copy()
+    equity["cash"] = initial_capital
+    equity["position_shares"] = 0
+    equity["close"] = price_df["close"].values
+
+    if not trades_df.empty:
+        for trade in trades_df.to_dict("records"):
+            entry_mask = equity["date"] >= trade["entry_date"]
+            exit_mask = equity["date"] > trade["exit_date"]
+            equity.loc[entry_mask, "cash"] -= trade["entry_price"] * trade["size"]
+            equity.loc[exit_mask, "cash"] += trade["exit_price"] * trade["size"]
+            equity.loc[entry_mask, "position_shares"] += trade["size"]
+            equity.loc[exit_mask, "position_shares"] -= trade["size"]
+
+    equity["market_value"] = equity["position_shares"] * equity["close"]
+    equity["equity"] = equity["cash"] + equity["market_value"]
+    equity["daily_return"] = equity["equity"].pct_change().fillna(0.0)
+    equity["cum_return"] = equity["equity"] / initial_capital - 1.0
+    equity["running_peak"] = equity["equity"].cummax()
+    equity["drawdown"] = equity["equity"] / equity["running_peak"] - 1.0
+    return equity
+
+
 def backtest_breakout_strategy(
     df: pd.DataFrame,
     params: StrategyParams,
     symbol: str,
     position_size: int = POSITION_SIZE,
     initial_capital: float = INITIAL_CAPITAL,
+    entry_start_date: pd.Timestamp | None = None,
+    entry_end_date: pd.Timestamp | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     signal_df = detect_breakouts(df, params.breakout_lookback, params.atr_window).reset_index(drop=True)
+    filtered_signal = apply_signal_filters(signal_df, params)
     trades: list[dict] = []
     i = 0
+    current_capital = initial_capital
 
     while i < len(signal_df) - 1:
         row = signal_df.iloc[i]
-        if not bool(row["breakout_signal"]):
+        if not bool(filtered_signal.iloc[i]):
             i += 1
             continue
 
         entry_idx = i + 1
         entry_row = signal_df.iloc[entry_idx]
+        entry_date = pd.Timestamp(entry_row["date"])
+        if entry_start_date is not None and entry_date < entry_start_date:
+            i += 1
+            continue
+        if entry_end_date is not None and entry_date > entry_end_date:
+            i += 1
+            continue
         atr_at_signal = float(row["atr"])
         entry_price = float(entry_row["open"])
+        size = max(1, int((current_capital * CAPITAL_FRACTION_PER_TRADE) // entry_price))
         stop_price = entry_price - params.stop_atr * atr_at_signal
         target_price = entry_price + params.target_atr * atr_at_signal
 
@@ -156,22 +230,23 @@ def backtest_breakout_strategy(
                 break
 
         gross_return = (exit_price - entry_price) / entry_price
-        pnl = (exit_price - entry_price) * position_size
+        pnl = (exit_price - entry_price) * size
         if exit_reason == "stop_loss":
             outcome = "Stop-loss triggered"
         elif exit_reason == "profit_target" or gross_return > 0:
             outcome = "Successful"
         else:
             outcome = "Timed out"
+        current_capital += pnl
 
         trades.append(
             {
                 "symbol": symbol,
-                "entry_date": pd.Timestamp(entry_row["date"]),
+                "entry_date": entry_date,
                 "exit_date": exit_date,
                 "entry_price": round(entry_price, 4),
                 "exit_price": round(exit_price, 4),
-                "size": position_size,
+                "size": size,
                 "direction": "LONG",
                 "gross_return": gross_return,
                 "pnl": pnl,
@@ -185,6 +260,8 @@ def backtest_breakout_strategy(
                 "stop_atr": params.stop_atr,
                 "target_atr": params.target_atr,
                 "max_hold_days": params.max_hold_days,
+                "trend_filter": params.trend_filter,
+                "volume_filter": params.volume_filter,
             }
         )
 
@@ -192,26 +269,7 @@ def backtest_breakout_strategy(
             i += 1
 
     trades_df = pd.DataFrame(trades)
-    equity = pd.DataFrame({"date": pd.to_datetime(signal_df["date"])})
-    equity["cash"] = initial_capital
-    equity["position_shares"] = 0
-    equity["close"] = signal_df["close"].values
-
-    if not trades_df.empty:
-        for trade in trades_df.to_dict("records"):
-            entry_mask = equity["date"] >= trade["entry_date"]
-            exit_mask = equity["date"] > trade["exit_date"]
-            equity.loc[entry_mask, "cash"] -= trade["entry_price"] * trade["size"]
-            equity.loc[exit_mask, "cash"] += trade["exit_price"] * trade["size"]
-            equity.loc[entry_mask, "position_shares"] += trade["size"]
-            equity.loc[exit_mask, "position_shares"] -= trade["size"]
-
-    equity["market_value"] = equity["position_shares"] * equity["close"]
-    equity["equity"] = equity["cash"] + equity["market_value"]
-    equity["daily_return"] = equity["equity"].pct_change().fillna(0.0)
-    equity["cum_return"] = equity["equity"] / initial_capital - 1.0
-    equity["running_peak"] = equity["equity"].cummax()
-    equity["drawdown"] = equity["equity"] / equity["running_peak"] - 1.0
+    equity = build_equity_curve(signal_df, trades_df, initial_capital=initial_capital)
     return trades_df, equity
 
 
@@ -259,12 +317,14 @@ def compute_performance_metrics(
 
 def parameter_grid() -> list[StrategyParams]:
     return [
-        StrategyParams(a, b, c, d, e)
+        StrategyParams(a, b, c, d, e, f, g)
         for a in BREAKOUT_LOOKBACK_OPTIONS
         for b in ATR_WINDOW_OPTIONS
         for c in STOP_ATR_OPTIONS
         for d in TARGET_ATR_OPTIONS
         for e in MAX_HOLD_DAYS_OPTIONS
+        for f in TREND_FILTER_OPTIONS
+        for g in VOLUME_FILTER_OPTIONS
     ]
 
 
@@ -276,6 +336,9 @@ def walk_forward_backtest(df: pd.DataFrame, symbol: str) -> tuple[pd.DataFrame, 
     for test_start in range(TRAINING_DAYS, len(df) - TEST_DAYS, TEST_DAYS):
         train = df.iloc[test_start - TRAINING_DAYS : test_start].reset_index(drop=True)
         test = df.iloc[test_start : test_start + TEST_DAYS].reset_index(drop=True)
+        context = df.iloc[test_start - TRAINING_DAYS : test_start + TEST_DAYS].reset_index(drop=True)
+        test_start_date = pd.Timestamp(test["date"].iloc[0])
+        test_end_date = pd.Timestamp(test["date"].iloc[-1])
 
         best_score = -np.inf
         best_params: StrategyParams | None = None
@@ -295,15 +358,24 @@ def walk_forward_backtest(df: pd.DataFrame, symbol: str) -> tuple[pd.DataFrame, 
         if best_params is None:
             continue
 
-        test_trades, test_equity = backtest_breakout_strategy(test, best_params, symbol)
+        test_trades, test_equity = backtest_breakout_strategy(
+            context,
+            best_params,
+            symbol,
+            entry_start_date=test_start_date,
+            entry_end_date=test_end_date,
+        )
+        test_equity = test_equity.loc[
+            (pd.to_datetime(test_equity["date"]) >= test_start_date)
+            & (pd.to_datetime(test_equity["date"]) <= test_end_date)
+        ].reset_index(drop=True)
         if not test_trades.empty:
             test_trades = test_trades.assign(
                 train_start=pd.Timestamp(train["date"].iloc[0]),
                 train_end=pd.Timestamp(train["date"].iloc[-1]),
-                test_start=pd.Timestamp(test["date"].iloc[0]),
-                test_end=pd.Timestamp(test["date"].iloc[-1]),
+                test_start=test_start_date,
+                test_end=test_end_date,
             )
-        test_equity = test_equity.assign(symbol=symbol, test_start=pd.Timestamp(test["date"].iloc[0]))
         metrics = compute_performance_metrics(test_trades, test_equity)
 
         windows.append(
@@ -317,16 +389,19 @@ def walk_forward_backtest(df: pd.DataFrame, symbol: str) -> tuple[pd.DataFrame, 
                 "selected_stop_atr": best_params.stop_atr,
                 "selected_target_atr": best_params.target_atr,
                 "selected_max_hold_days": best_params.max_hold_days,
+                "selected_trend_filter": best_params.trend_filter,
+                "selected_volume_filter": best_params.volume_filter,
                 "test_trade_count": metrics["trade_count"],
                 "test_sharpe": metrics["annualized_sharpe_ratio"],
                 "test_total_return": metrics["total_return"],
             }
         )
         test_trades_all.append(test_trades)
-        test_equity_all.append(test_equity)
+        test_equity_all.append(test)
 
     all_trades = pd.concat(test_trades_all, ignore_index=True) if test_trades_all else pd.DataFrame()
-    all_equity = pd.concat(test_equity_all, ignore_index=True) if test_equity_all else pd.DataFrame()
+    stitched_prices = pd.concat(test_equity_all, ignore_index=True) if test_equity_all else pd.DataFrame()
+    all_equity = build_equity_curve(stitched_prices, all_trades, initial_capital=INITIAL_CAPITAL)
     window_df = pd.DataFrame(windows)
     return all_trades, all_equity, window_df
 

@@ -150,26 +150,28 @@ ul.task-list li input[type="checkbox"] {
 
 <section id="strategy-overview" class="level2">
 <h2 class="anchored" data-anchor-id="strategy-overview">Strategy Overview</h2>
-<p>This project tests a long-only ETF breakout strategy using daily price data from Interactive Brokers via ShinyBroker. I screened 10 liquid ETFs and selected <strong>QQQ</strong> for the final report because it delivered the strongest out-of-sample Sharpe ratio in the walk-forward screen while still generating an active and readable trade blotter. The strategy looks for a close above the highest high from the previous 20 trading sessions, enters at the next day’s open, and then manages risk with an ATR-based stop-loss, an ATR-based profit target, and a maximum holding period. The final implementation uses a one-year training window of 252 trading days and a 63-trading-day out-of-sample test window that rolls forward through the sample.</p>
+<p>This project tests a long-only ETF breakout strategy using daily price data from Interactive Brokers via ShinyBroker. I screened 11 liquid ETFs and selected <strong>ARKK</strong> for the final report because it delivered the strongest out-of-sample Sharpe ratio and one of the best total returns in the walk-forward screen while still generating an active and readable trade blotter. The strategy looks for a close above the highest high from the previous 20 trading sessions, enters at the next day’s open, and then manages risk with an ATR-based stop-loss, an ATR-based profit target, and a maximum holding period. The final implementation uses a one-year training window of 252 trading days and a 63-trading-day out-of-sample test window that rolls forward through the sample.</p>
 </section>
 <section id="asset-selection" class="level2">
 <h2 class="anchored" data-anchor-id="asset-selection">Asset Selection</h2>
-<p>I screened the following ETF universe with the same walk-forward process: <code>SPY</code>, <code>QQQ</code>, <code>IWM</code>, <code>DIA</code>, <code>XLE</code>, <code>XLK</code>, <code>XLF</code>, <code>XLV</code>, <code>GLD</code>, and <code>TLT</code>. For each ETF, I optimized the breakout parameters on the trailing 252 trading days and then evaluated the chosen configuration on the next 63-day out-of-sample window. QQQ ranked first in the screen with 13 out-of-sample trades and the best Sharpe ratio in the candidate set, so I used it as the featured asset for the full write-up.</p>
+<p>I screened the following ETF universe with the same walk-forward process: <code>SPY</code>, <code>QQQ</code>, <code>SMH</code>, <code>SOXX</code>, <code>ARKK</code>, <code>XLE</code>, <code>XLK</code>, <code>XLF</code>, <code>XBI</code>, <code>GLD</code>, and <code>TLT</code>. For each ETF, I optimized the breakout parameters on the trailing 252 trading days and then evaluated the chosen configuration on the next 63-day out-of-sample window. ARKK ranked first in the screen with an annualized out-of-sample Sharpe ratio of <strong>1.28</strong>, total return of <strong>42.94%</strong>, and a 12-trade blotter, so it became the featured asset for the full write-up.</p>
 <p>Download the screen summary here: <a href="data/asset_screen.csv">asset_screen.csv</a></p>
 <iframe src="assets/screen_summary.html" width="100%" height="460" style="border:none;">
 </iframe>
 </section>
 <section id="breakout-definition" class="level2">
 <h2 class="anchored" data-anchor-id="breakout-definition">Breakout Definition</h2>
-<p>The breakout detection function is named <code>detect_breakouts</code>. In plain English, it labels a breakout when today’s closing price finishes above the highest intraday high observed over the previous <strong>20 trading days</strong>. That prior 20-day high is a Donchian-style breakout threshold. The same function also calculates a <strong>14-day Average True Range (ATR)</strong> so the trade management rules use volatility information that was already known at the time of the signal.</p>
-<p>The strategy parameters are explicit and easy to locate in the Python code. The final QQQ implementation selected most often by the walk-forward process used:</p>
+<p>The breakout detection function is named <code>detect_breakouts</code>. In plain English, it labels a breakout when today’s closing price finishes above the highest intraday high observed over the previous <strong>20 trading days</strong>. That prior 20-day high is a Donchian-style breakout threshold. The same function also calculates a <strong>14-day Average True Range (ATR)</strong> plus rolling moving averages and average volume so the trade management rules and optional filters use only information that was already known at the time of the signal.</p>
+<p>The strategy parameters are explicit and easy to locate in the Python code. The final ARKK implementation selected most often by the walk-forward process used:</p>
 <ul>
 <li>Breakout lookback: <code>20</code> trading days</li>
 <li>ATR window: <code>14</code> trading days</li>
-<li>Stop-loss: <code>2.5 x ATR</code> below entry</li>
-<li>Profit target: <code>2.0 x ATR</code> above entry</li>
+<li>Stop-loss: <code>2.0 x ATR</code> below entry</li>
+<li>Profit target: <code>4.0 x ATR</code> above entry</li>
 <li>Timeout: <code>20</code> trading days</li>
-<li>Position size: <code>100</code> shares</li>
+<li>Trend filter options allowed in optimization: <code>none</code>, <code>sma50</code>, or <code>sma200</code></li>
+<li>Volume filter: not used in the final search grid</li>
+<li>Position sizing rule: invest approximately <code>95%</code> of current capital at each new entry, then round down to whole shares</li>
 <li>Direction: <code>Long only</code></li>
 </ul>
 </section>
@@ -178,7 +180,7 @@ ul.task-list li input[type="checkbox"] {
 <p>Trades are entered at the next trading day’s open after a breakout signal. Once a position is open, the exit logic is checked in conservative order:</p>
 <ol type="1">
 <li>Stop-loss if the day’s low touches the stop level</li>
-<li>Profit target if the day’s high reaches the target level</li>
+<li>Profit target if the day’s high reaches the <code>4.0 x ATR</code> target level</li>
 <li>Timeout exit at the close after 20 trading days</li>
 <li>End-of-sample close if a test window ends before another exit rule fires</li>
 </ol>
@@ -192,16 +194,16 @@ ul.task-list li input[type="checkbox"] {
 <section id="performance-snapshot" class="level2">
 <h2 class="anchored" data-anchor-id="performance-snapshot">Performance Snapshot</h2>
 <ul>
-<li>Trade count: <code>13</code></li>
-<li>Average return per trade: <code>0.85%</code></li>
-<li>Annualized Sharpe ratio: <code>-0.29</code></li>
-<li>Annualized Sortino ratio: <code>-0.38</code></li>
-<li>Win rate: <code>61.54%</code></li>
-<li>Profit factor: <code>2.05</code></li>
-<li>Expectancy: <code>$418.44</code> per trade</li>
-<li>Max drawdown: <code>-2.72%</code></li>
-<li>Total return on the marked-to-market equity curve: <code>-0.38%</code></li>
-<li>Risk-free rate assumption used in Sharpe and Sortino: <code>4.00%</code></li>
+<li>Trade count: <code>12</code></li>
+<li>Average return per trade: <code>3.66%</code></li>
+<li>Annualized Sharpe ratio: <code>1.28</code></li>
+<li>Annualized Sortino ratio: <code>1.07</code></li>
+<li>Win rate: <code>66.67%</code></li>
+<li>Profit factor: <code>3.55</code></li>
+<li>Expectancy: <code>$3,638.24</code> per trade</li>
+<li>Max drawdown: <code>-13.13%</code></li>
+<li>Total return on the marked-to-market equity curve: <code>42.94%</code></li>
+<li>Risk-free rate assumption used in Sharpe and Sortino: <code>0.00%</code></li>
 </ul>
 <p>What the headline metrics mean:</p>
 <ul>
@@ -226,10 +228,10 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="trade-outcome-analysis" class="level2">
 <h2 class="anchored" data-anchor-id="trade-outcome-analysis">Trade Outcome Analysis</h2>
-<p>The final walk-forward backtest produced 13 QQQ trades:</p>
+<p>The final walk-forward backtest produced 12 ARKK trades:</p>
 <ul>
 <li>Successful: <code>8</code></li>
-<li>Stop-loss triggered: <code>4</code></li>
+<li>Stop-loss triggered: <code>3</code></li>
 <li>Timed out: <code>1</code></li>
 </ul>
 <p>Download the trade outcome summary here: <a href="data/trade_outcomes.csv">trade_outcomes.csv</a></p>
@@ -247,7 +249,7 @@ ul.task-list li input[type="checkbox"] {
 <ul>
 <li>Data source: Interactive Brokers historical daily bars retrieved with <code>shinybroker</code></li>
 <li>Frequency: Daily</li>
-<li>Asset universe: 10 liquid ETFs</li>
+<li>Asset universe: 11 liquid ETFs</li>
 <li>In-sample optimization window: <code>252</code> trading days</li>
 <li>Out-of-sample test window: <code>63</code> trading days</li>
 <li>Slippage assumption: <code>0</code></li>
@@ -255,6 +257,8 @@ ul.task-list li input[type="checkbox"] {
 <li>Missing-value handling: rows with missing OHLCV values are removed before testing</li>
 <li>Exposure: one long position at a time</li>
 <li>Execution convention: next-day open after signal</li>
+<li>Capital allocation rule: approximately <code>95%</code> of current capital is deployed on each new position</li>
+<li>Risk-free rate assumption in performance metrics: <code>0.00%</code></li>
 </ul>
 </section>
 <section id="replication" class="level2">
