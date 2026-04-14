@@ -1,0 +1,16 @@
+project:
+  type: website
+  output-dir: .
+
+website:
+  title: "ETF Breakout Strategy"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Breakout Report
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true

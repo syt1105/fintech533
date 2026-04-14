@@ -1,0 +1,32 @@
+:root {
+  --accent: #0b3954;
+  --accent-soft: #bfd7ea;
+  --ink: #102a43;
+  --paper: #f7fafc;
+  --card: #ffffff;
+}
+
+body {
+  color: var(--ink);
+  background: linear-gradient(180deg, #ffffff 0%, var(--paper) 100%);
+}
+
+.quarto-title-block .quarto-title-banner {
+  background: linear-gradient(120deg, var(--accent) 0%, #1f6f8b 100%);
+}
+
+main.content {
+  max-width: 980px;
+}
+
+h2 {
+  margin-top: 2rem;
+  border-bottom: 2px solid var(--accent-soft);
+  padding-bottom: 0.25rem;
+}
+
+iframe {
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(16, 42, 67, 0.08);
+}

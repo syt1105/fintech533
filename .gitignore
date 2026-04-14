@@ -1,0 +1,14 @@
+.DS_Store
+.idea/
+.vscode/
+.quarto/
+_site/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ipynb_checkpoints/
+data/raw/
+data/intermediate/
+

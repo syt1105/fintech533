@@ -1,0 +1,35 @@
+{
+  "selected_symbol": "QQQ",
+  "screened_universe": [
+    "SPY",
+    "QQQ",
+    "IWM",
+    "DIA",
+    "XLE",
+    "XLK",
+    "XLF",
+    "XLV",
+    "GLD",
+    "TLT"
+  ],
+  "initial_capital": 100000.0,
+  "position_size": 100,
+  "risk_free_rate": 0.04,
+  "selected_metrics": {
+    "trade_count": 13,
+    "average_return_per_trade": 0.00851313742407531,
+    "annualized_sharpe_ratio": -0.29401010773644504,
+    "annualized_sortino_ratio": -0.3770834700443634,
+    "win_rate": 0.6153846153846154,
+    "profit_factor": 2.0455097712155874,
+    "expectancy_dollars": 418.4423076923083,
+    "max_drawdown": -0.02718830902711833,
+    "total_return": -0.0037599999999999856
+  },
+  "selected_breakout_lookback": 20,
+  "selected_atr_window": 14,
+  "selected_stop_atr": 2.5,
+  "selected_target_atr": 2.0,
+  "selected_max_hold_days": 20,
+  "asset_selection_note": "I screened 10 liquid ETFs using the same one-year training and one-quarter out-of-sample framework, then selected QQQ because it finished with the strongest out-of-sample Sharpe ratio while still generating an active trade blotter."
+}

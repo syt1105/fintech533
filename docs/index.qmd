@@ -1,0 +1,122 @@
+---
+title: "ETF Breakout Strategy"
+---
+
+## Strategy Overview
+
+This project tests a long-only ETF breakout strategy using daily price data from Interactive Brokers via ShinyBroker. I screened 10 liquid ETFs and selected **QQQ** for the final report because it delivered the strongest out-of-sample Sharpe ratio in the walk-forward screen while still generating an active and readable trade blotter. The strategy looks for a close above the highest high from the previous 20 trading sessions, enters at the next day's open, and then manages risk with an ATR-based stop-loss, an ATR-based profit target, and a maximum holding period. The final implementation uses a one-year training window of 252 trading days and a 63-trading-day out-of-sample test window that rolls forward through the sample.
+
+## Asset Selection
+
+I screened the following ETF universe with the same walk-forward process: `SPY`, `QQQ`, `IWM`, `DIA`, `XLE`, `XLK`, `XLF`, `XLV`, `GLD`, and `TLT`. For each ETF, I optimized the breakout parameters on the trailing 252 trading days and then evaluated the chosen configuration on the next 63-day out-of-sample window. QQQ ranked first in the screen with 13 out-of-sample trades and the best Sharpe ratio in the candidate set, so I used it as the featured asset for the full write-up.
+
+Download the screen summary here: [asset_screen.csv](data/asset_screen.csv)
+
+<iframe src="assets/screen_summary.html" width="100%" height="460" style="border:none;"></iframe>
+
+## Breakout Definition
+
+The breakout detection function is named `detect_breakouts`. In plain English, it labels a breakout when today's closing price finishes above the highest intraday high observed over the previous **20 trading days**. That prior 20-day high is a Donchian-style breakout threshold. The same function also calculates a **14-day Average True Range (ATR)** so the trade management rules use volatility information that was already known at the time of the signal.
+
+The strategy parameters are explicit and easy to locate in the Python code. The final QQQ implementation selected most often by the walk-forward process used:
+
+- Breakout lookback: `20` trading days
+- ATR window: `14` trading days
+- Stop-loss: `2.5 x ATR` below entry
+- Profit target: `2.0 x ATR` above entry
+- Timeout: `20` trading days
+- Position size: `100` shares
+- Direction: `Long only`
+
+## Trade Rules
+
+Trades are entered at the next trading day's open after a breakout signal. Once a position is open, the exit logic is checked in conservative order:
+
+1. Stop-loss if the day's low touches the stop level
+2. Profit target if the day's high reaches the target level
+3. Timeout exit at the close after 20 trading days
+4. End-of-sample close if a test window ends before another exit rule fires
+
+For trade outcome analysis, each completed trade is classified into one of three buckets:
+
+- **Successful**: the profit target was hit, or the trade closed profitably before the test window ended
+- **Timed out**: the trade was force-closed after the holding limit and did not qualify as successful
+- **Stop-loss triggered**: the ATR stop was hit
+
+## Performance Snapshot
+
+- Trade count: `13`
+- Average return per trade: `0.85%`
+- Annualized Sharpe ratio: `-0.29`
+- Annualized Sortino ratio: `-0.38`
+- Win rate: `61.54%`
+- Profit factor: `2.05`
+- Expectancy: `$418.44` per trade
+- Max drawdown: `-2.72%`
+- Total return on the marked-to-market equity curve: `-0.38%`
+- Risk-free rate assumption used in Sharpe and Sortino: `4.00%`
+
+What the headline metrics mean:
+
+- **Average return per trade** measures the typical percentage gain or loss from each completed position.
+- **Sharpe ratio** measures risk-adjusted return after subtracting the stated risk-free rate from daily strategy returns.
+- **Sortino ratio** is similar to Sharpe but penalizes only downside volatility.
+- **Max drawdown** shows the worst peak-to-trough decline in the strategy equity curve.
+- **Win rate** measures how often the strategy finishes a trade with positive PnL.
+- **Profit factor** compares total gross profits against total gross losses.
+- **Expectancy** measures the average dollar PnL created by one trade.
+
+## Equity Curve
+
+<iframe src="assets/equity_curve.html" width="100%" height="460" style="border:none;"></iframe>
+
+## Drawdown
+
+<iframe src="assets/drawdown.html" width="100%" height="360" style="border:none;"></iframe>
+
+## Trade Outcome Analysis
+
+The final walk-forward backtest produced 13 QQQ trades:
+
+- Successful: `8`
+- Stop-loss triggered: `4`
+- Timed out: `1`
+
+Download the trade outcome summary here: [trade_outcomes.csv](data/trade_outcomes.csv)
+
+<iframe src="assets/trade_outcomes.html" width="100%" height="400" style="border:none;"></iframe>
+
+## Trade Blotter
+
+The full blotter includes entry date, exit date, entry price, exit price, position size, direction, realized return, realized PnL, and trade outcome. It is available in downloadable CSV format here: [trade_blotter.csv](data/trade_blotter.csv)
+
+<iframe src="assets/trade_blotter.html" width="100%" height="980" style="border:none;"></iframe>
+
+## Methodology and Assumptions
+
+- Data source: Interactive Brokers historical daily bars retrieved with `shinybroker`
+- Frequency: Daily
+- Asset universe: 10 liquid ETFs
+- In-sample optimization window: `252` trading days
+- Out-of-sample test window: `63` trading days
+- Slippage assumption: `0`
+- Commission assumption: `0`
+- Missing-value handling: rows with missing OHLCV values are removed before testing
+- Exposure: one long position at a time
+- Execution convention: next-day open after signal
+
+## Replication
+
+To regenerate the project locally:
+
+1. Ensure TWS or IB Gateway is running and reachable at `127.0.0.1:7497`
+2. From the project root, run `python3 build_report.py`
+3. Render the site with `quarto render docs`
+
+The generated artifacts used by the site are stored in:
+
+- `docs/data/asset_screen.csv`
+- `docs/data/trade_blotter.csv`
+- `docs/data/trade_outcomes.csv`
+- `docs/data/equity_curve.csv`
+- `docs/data/walk_forward_windows.csv`

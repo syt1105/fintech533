@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.36">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>ETF Breakout Strategy</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-158031087360bce0ff56dc785ce39e06.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">ETF Breakout Strategy</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="./index.html" aria-current="page"> 
+<span class="menu-text">Breakout Report</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#strategy-overview" id="toc-strategy-overview" class="nav-link active" data-scroll-target="#strategy-overview">Strategy Overview</a></li>
+  <li><a href="#asset-selection" id="toc-asset-selection" class="nav-link" data-scroll-target="#asset-selection">Asset Selection</a></li>
+  <li><a href="#breakout-definition" id="toc-breakout-definition" class="nav-link" data-scroll-target="#breakout-definition">Breakout Definition</a></li>
+  <li><a href="#trade-rules" id="toc-trade-rules" class="nav-link" data-scroll-target="#trade-rules">Trade Rules</a></li>
+  <li><a href="#performance-snapshot" id="toc-performance-snapshot" class="nav-link" data-scroll-target="#performance-snapshot">Performance Snapshot</a></li>
+  <li><a href="#equity-curve" id="toc-equity-curve" class="nav-link" data-scroll-target="#equity-curve">Equity Curve</a></li>
+  <li><a href="#drawdown" id="toc-drawdown" class="nav-link" data-scroll-target="#drawdown">Drawdown</a></li>
+  <li><a href="#trade-outcome-analysis" id="toc-trade-outcome-analysis" class="nav-link" data-scroll-target="#trade-outcome-analysis">Trade Outcome Analysis</a></li>
+  <li><a href="#trade-blotter" id="toc-trade-blotter" class="nav-link" data-scroll-target="#trade-blotter">Trade Blotter</a></li>
+  <li><a href="#methodology-and-assumptions" id="toc-methodology-and-assumptions" class="nav-link" data-scroll-target="#methodology-and-assumptions">Methodology and Assumptions</a></li>
+  <li><a href="#replication" id="toc-replication" class="nav-link" data-scroll-target="#replication">Replication</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">ETF Breakout Strategy</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="strategy-overview" class="level2">
+<h2 class="anchored" data-anchor-id="strategy-overview">Strategy Overview</h2>
+<p>This project tests a long-only ETF breakout strategy using daily price data from Interactive Brokers via ShinyBroker. I screened 10 liquid ETFs and selected <strong>QQQ</strong> for the final report because it delivered the strongest out-of-sample Sharpe ratio in the walk-forward screen while still generating an active and readable trade blotter. The strategy looks for a close above the highest high from the previous 20 trading sessions, enters at the next day’s open, and then manages risk with an ATR-based stop-loss, an ATR-based profit target, and a maximum holding period. The final implementation uses a one-year training window of 252 trading days and a 63-trading-day out-of-sample test window that rolls forward through the sample.</p>
+</section>
+<section id="asset-selection" class="level2">
+<h2 class="anchored" data-anchor-id="asset-selection">Asset Selection</h2>
+<p>I screened the following ETF universe with the same walk-forward process: <code>SPY</code>, <code>QQQ</code>, <code>IWM</code>, <code>DIA</code>, <code>XLE</code>, <code>XLK</code>, <code>XLF</code>, <code>XLV</code>, <code>GLD</code>, and <code>TLT</code>. For each ETF, I optimized the breakout parameters on the trailing 252 trading days and then evaluated the chosen configuration on the next 63-day out-of-sample window. QQQ ranked first in the screen with 13 out-of-sample trades and the best Sharpe ratio in the candidate set, so I used it as the featured asset for the full write-up.</p>
+<p>Download the screen summary here: <a href="data/asset_screen.csv">asset_screen.csv</a></p>
+<iframe src="assets/screen_summary.html" width="100%" height="460" style="border:none;">
+</iframe>
+</section>
+<section id="breakout-definition" class="level2">
+<h2 class="anchored" data-anchor-id="breakout-definition">Breakout Definition</h2>
+<p>The breakout detection function is named <code>detect_breakouts</code>. In plain English, it labels a breakout when today’s closing price finishes above the highest intraday high observed over the previous <strong>20 trading days</strong>. That prior 20-day high is a Donchian-style breakout threshold. The same function also calculates a <strong>14-day Average True Range (ATR)</strong> so the trade management rules use volatility information that was already known at the time of the signal.</p>
+<p>The strategy parameters are explicit and easy to locate in the Python code. The final QQQ implementation selected most often by the walk-forward process used:</p>
+<ul>
+<li>Breakout lookback: <code>20</code> trading days</li>
+<li>ATR window: <code>14</code> trading days</li>
+<li>Stop-loss: <code>2.5 x ATR</code> below entry</li>
+<li>Profit target: <code>2.0 x ATR</code> above entry</li>
+<li>Timeout: <code>20</code> trading days</li>
+<li>Position size: <code>100</code> shares</li>
+<li>Direction: <code>Long only</code></li>
+</ul>
+</section>
+<section id="trade-rules" class="level2">
+<h2 class="anchored" data-anchor-id="trade-rules">Trade Rules</h2>
+<p>Trades are entered at the next trading day’s open after a breakout signal. Once a position is open, the exit logic is checked in conservative order:</p>
+<ol type="1">
+<li>Stop-loss if the day’s low touches the stop level</li>
+<li>Profit target if the day’s high reaches the target level</li>
+<li>Timeout exit at the close after 20 trading days</li>
+<li>End-of-sample close if a test window ends before another exit rule fires</li>
+</ol>
+<p>For trade outcome analysis, each completed trade is classified into one of three buckets:</p>
+<ul>
+<li><strong>Successful</strong>: the profit target was hit, or the trade closed profitably before the test window ended</li>
+<li><strong>Timed out</strong>: the trade was force-closed after the holding limit and did not qualify as successful</li>
+<li><strong>Stop-loss triggered</strong>: the ATR stop was hit</li>
+</ul>
+</section>
+<section id="performance-snapshot" class="level2">
+<h2 class="anchored" data-anchor-id="performance-snapshot">Performance Snapshot</h2>
+<ul>
+<li>Trade count: <code>13</code></li>
+<li>Average return per trade: <code>0.85%</code></li>
+<li>Annualized Sharpe ratio: <code>-0.29</code></li>
+<li>Annualized Sortino ratio: <code>-0.38</code></li>
+<li>Win rate: <code>61.54%</code></li>
+<li>Profit factor: <code>2.05</code></li>
+<li>Expectancy: <code>$418.44</code> per trade</li>
+<li>Max drawdown: <code>-2.72%</code></li>
+<li>Total return on the marked-to-market equity curve: <code>-0.38%</code></li>
+<li>Risk-free rate assumption used in Sharpe and Sortino: <code>4.00%</code></li>
+</ul>
+<p>What the headline metrics mean:</p>
+<ul>
+<li><strong>Average return per trade</strong> measures the typical percentage gain or loss from each completed position.</li>
+<li><strong>Sharpe ratio</strong> measures risk-adjusted return after subtracting the stated risk-free rate from daily strategy returns.</li>
+<li><strong>Sortino ratio</strong> is similar to Sharpe but penalizes only downside volatility.</li>
+<li><strong>Max drawdown</strong> shows the worst peak-to-trough decline in the strategy equity curve.</li>
+<li><strong>Win rate</strong> measures how often the strategy finishes a trade with positive PnL.</li>
+<li><strong>Profit factor</strong> compares total gross profits against total gross losses.</li>
+<li><strong>Expectancy</strong> measures the average dollar PnL created by one trade.</li>
+</ul>
+</section>
+<section id="equity-curve" class="level2">
+<h2 class="anchored" data-anchor-id="equity-curve">Equity Curve</h2>
+<iframe src="assets/equity_curve.html" width="100%" height="460" style="border:none;">
+</iframe>
+</section>
+<section id="drawdown" class="level2">
+<h2 class="anchored" data-anchor-id="drawdown">Drawdown</h2>
+<iframe src="assets/drawdown.html" width="100%" height="360" style="border:none;">
+</iframe>
+</section>
+<section id="trade-outcome-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="trade-outcome-analysis">Trade Outcome Analysis</h2>
+<p>The final walk-forward backtest produced 13 QQQ trades:</p>
+<ul>
+<li>Successful: <code>8</code></li>
+<li>Stop-loss triggered: <code>4</code></li>
+<li>Timed out: <code>1</code></li>
+</ul>
+<p>Download the trade outcome summary here: <a href="data/trade_outcomes.csv">trade_outcomes.csv</a></p>
+<iframe src="assets/trade_outcomes.html" width="100%" height="400" style="border:none;">
+</iframe>
+</section>
+<section id="trade-blotter" class="level2">
+<h2 class="anchored" data-anchor-id="trade-blotter">Trade Blotter</h2>
+<p>The full blotter includes entry date, exit date, entry price, exit price, position size, direction, realized return, realized PnL, and trade outcome. It is available in downloadable CSV format here: <a href="data/trade_blotter.csv">trade_blotter.csv</a></p>
+<iframe src="assets/trade_blotter.html" width="100%" height="980" style="border:none;">
+</iframe>
+</section>
+<section id="methodology-and-assumptions" class="level2">
+<h2 class="anchored" data-anchor-id="methodology-and-assumptions">Methodology and Assumptions</h2>
+<ul>
+<li>Data source: Interactive Brokers historical daily bars retrieved with <code>shinybroker</code></li>
+<li>Frequency: Daily</li>
+<li>Asset universe: 10 liquid ETFs</li>
+<li>In-sample optimization window: <code>252</code> trading days</li>
+<li>Out-of-sample test window: <code>63</code> trading days</li>
+<li>Slippage assumption: <code>0</code></li>
+<li>Commission assumption: <code>0</code></li>
+<li>Missing-value handling: rows with missing OHLCV values are removed before testing</li>
+<li>Exposure: one long position at a time</li>
+<li>Execution convention: next-day open after signal</li>
+</ul>
+</section>
+<section id="replication" class="level2">
+<h2 class="anchored" data-anchor-id="replication">Replication</h2>
+<p>To regenerate the project locally:</p>
+<ol type="1">
+<li>Ensure TWS or IB Gateway is running and reachable at <code>127.0.0.1:7497</code></li>
+<li>From the project root, run <code>python3 build_report.py</code></li>
+<li>Render the site with <code>quarto render docs</code></li>
+</ol>
+<p>The generated artifacts used by the site are stored in:</p>
+<ul>
+<li><code>docs/data/asset_screen.csv</code></li>
+<li><code>docs/data/trade_blotter.csv</code></li>
+<li><code>docs/data/trade_outcomes.csv</code></li>
+<li><code>docs/data/equity_curve.csv</code></li>
+<li><code>docs/data/walk_forward_windows.csv</code></li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
